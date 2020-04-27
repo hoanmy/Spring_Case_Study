@@ -1,6 +1,0 @@
-.gitignore
-*/target/
-.classpath
-.project
-.setting/
-*/.settings/
