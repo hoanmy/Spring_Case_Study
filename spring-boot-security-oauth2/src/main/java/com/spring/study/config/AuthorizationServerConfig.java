@@ -13,8 +13,8 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 
 @Configuration
 @EnableAuthorizationServer
-@ConfigurationProperties(prefix="security.oauth2.client")
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+	
 	@Value("${app.oauth.clientId}")
     private String CLIEN_ID;
 	

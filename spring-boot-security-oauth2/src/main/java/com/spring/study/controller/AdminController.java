@@ -13,8 +13,8 @@ import com.spring.study.model.User;
 import com.spring.study.service.UserService;
 
 @RestController
-@RequestMapping("/users")
-public class UserController {
+@RequestMapping("/admin")
+public class AdminController {
 
     @Autowired
     private UserService userService;
