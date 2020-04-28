@@ -16,6 +16,9 @@ import com.spring.study.model.User;
 
 public interface UserDao extends MongoRepository<User,String> {
 	  User findByUsername(@Param("username") String username);
+	  
 	  @Query(value = "{}", fields="{ password: 0 }")
 	  List<User> findAll();
+	  
+//	  User findByEmailIgnoreCase(@Param("username") String username);
 }

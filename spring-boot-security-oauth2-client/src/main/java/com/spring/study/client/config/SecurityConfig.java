@@ -1,6 +1,9 @@
 package com.spring.study.client.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
 import javax.servlet.Filter;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +27,9 @@ import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResour
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
 import org.springframework.security.oauth2.common.AuthenticationScheme;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.filter.CompositeFilter;
 import org.springframework.security.oauth2.client.filter.OAuth2ClientContextFilter;
 
 @Configuration
@@ -56,21 +61,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		http.authorizeRequests().antMatchers("/", "/login**", "/error**").permitAll().anyRequest().authenticated()
         .and().logout().logoutUrl("/logout").logoutSuccessUrl("/")
         .and().addFilterBefore(oauth2ClientFilter(), BasicAuthenticationFilter.class);
-		
-		/*
-		 * http .authorizeRequests().antMatchers("/", "/error**",
-		 * "/login**").permitAll() .anyRequest().authenticated() .and()
-		 * .logout().logoutUrl("/logout").logoutSuccessUrl("/login.jsp").permitAll()
-		 * .and() .formLogin() .loginProcessingUrl("/login") .loginPage("/login.jsp")
-		 * .failureUrl("/login.jsp?authentication_error=true") .permitAll();
-		 */
-			
-//		        .and().addFilterBefore(oauth2ClientFilter(), BasicAuthenticationFilter.class)
-
-		;
-
 	}
 
+	@Bean
+	@ConfigurationProperties("oursvn.client")
+	public AuthorizationCodeResourceDetails oursvnClient() {
+		return new AuthorizationCodeResourceDetails();
+	}
+
+	@Bean
+	@ConfigurationProperties("oursvn.resource")
+	public ResourceServerProperties oursvnResource() {
+		return new ResourceServerProperties();
+	}
+	
 	@Bean
 	@ConfigurationProperties("github.client")
 	public AuthorizationCodeResourceDetails githubClient() {
@@ -83,45 +87,48 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return new ResourceServerProperties();
 	}
 	
-	
-//	public AuthorizationCodeResourceDetails githubClient() {
-//		AuthorizationCodeResourceDetails details = new AuthorizationCodeResourceDetails();
-//		details.setId("github-hoanmy");
-//		details.setClientId("40c506f2741391fedc80");
-//		details.setClientSecret("ac396d4300625e23cc7b3bf6b4510ce79e20d322");
-//		details.setAccessTokenUri("https://github.com/login/oauth/access_token");
-//		details.setUserAuthorizationUri("https://github.com/login/oauth/authorize"); 
-//		details.setClientAuthenticationScheme(AuthenticationScheme.form);
-//		
-//		return details;
-//	}
-//
-//	public ResourceServerProperties githubResource() {
-//		ResourceServerProperties rs = new ResourceServerProperties(); 
-//		rs.setUserInfoUri("https://api.github.com/user");
-//		return rs;
-//	}
-
 	@Bean
-	public FilterRegistrationBean<OAuth2ClientContextFilter> oauth2ClientFilterRegistration(
-			OAuth2ClientContextFilter filter) {
-		FilterRegistrationBean<OAuth2ClientContextFilter> registration = new FilterRegistrationBean<OAuth2ClientContextFilter>();
+	public FilterRegistrationBean<OAuth2ClientContextFilter> oauth2ClientFilterRegistration(OAuth2ClientContextFilter filter) {
+		FilterRegistrationBean<OAuth2ClientContextFilter> registration = 
+				new FilterRegistrationBean<OAuth2ClientContextFilter>();
 		registration.setFilter(filter);
 		registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
 		return registration;
 	}	
 
 	private Filter oauth2ClientFilter() {
-		OAuth2ClientAuthenticationProcessingFilter oauth2ClientFilter = 
+		CompositeFilter compositeFilter = new CompositeFilter();
+		List<Filter> filters = new ArrayList<>();
+//		SimpleUrlAuthenticationSuccessHandler successHandler = new SimpleUrlAuthenticationSuccessHandler();
+//		successHandler.setAlwaysUseDefaultTargetUrl(true);
+//		successHandler.setDefaultTargetUrl("/user");
+		
+		OAuth2ClientAuthenticationProcessingFilter githubFilter = 
 				new OAuth2ClientAuthenticationProcessingFilter("/login/github");
-		OAuth2RestTemplate restTemplate = new OAuth2RestTemplate(githubClient(), oauth2ClientContext);
-		oauth2ClientFilter.setRestTemplate(restTemplate);
-		UserInfoTokenServices tokenServices = new UserInfoTokenServices(
-				githubResource().getUserInfoUri(),
-				githubClient().getClientId());
-		tokenServices.setRestTemplate(restTemplate);
-		oauth2ClientFilter.setTokenServices(tokenServices);
-		return oauth2ClientFilter;
+		OAuth2RestTemplate githubTemplate = new OAuth2RestTemplate(githubClient(), oauth2ClientContext);
+		githubFilter.setRestTemplate(githubTemplate);
+		UserInfoTokenServices githubTokenServices = 
+				new UserInfoTokenServices(githubResource().getUserInfoUri(), githubClient().getClientId());
+		githubTokenServices.setRestTemplate(githubTemplate);
+		githubFilter.setTokenServices(githubTokenServices);
+		
+		filters.add(githubFilter);
+		
+		OAuth2ClientAuthenticationProcessingFilter oursvnFilter = 
+				new OAuth2ClientAuthenticationProcessingFilter("/login/myapp");
+		OAuth2RestTemplate oursvnTemplate = new OAuth2RestTemplate(oursvnClient(), oauth2ClientContext);
+		oursvnFilter.setRestTemplate(oursvnTemplate);
+		UserInfoTokenServices oursvnTokenServices = 
+				new UserInfoTokenServices(oursvnResource().getUserInfoUri(), oursvnClient().getClientId());
+		oursvnTokenServices.setRestTemplate(oursvnTemplate);
+		oursvnFilter.setTokenServices(oursvnTokenServices);
+		
+		filters.add(oursvnFilter);
+		
+		
+		compositeFilter.setFilters(filters);
+		
+		return compositeFilter;
 	}
 //
 //	@Bean

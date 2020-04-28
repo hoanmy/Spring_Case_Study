@@ -8,8 +8,13 @@
 <a href="/login/github" th:href="@{/hello}" th:if="${#httpServletRequest?.remoteUser != undefined }">
       Go to Dashboard
 </a>
+</br>
 <a href="/hello" th:href="@{/login/github}" th:if="${#httpServletRequest?.remoteUser == undefined }">
       Login with GitHub
+</a>
+</br>
+<a href="/hello" th:href="@{/login/myapp}" >
+      Login with My App
 </a>
 </h3>                
 </body>

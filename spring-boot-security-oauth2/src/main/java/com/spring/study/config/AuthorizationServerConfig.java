@@ -47,7 +47,11 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	
 	@Value("${app.oauth.refreshTokeValiditySeconds}")
     private String FREFRESH_TOKEN_VALIDITY_SECONDS;
-    
+
+
+	@Value("${app.oauth.resourceId}")	
+	private String RESOURCE_ID;
+	
 	@Autowired
 	private TokenStore tokenStore;
 
@@ -64,7 +68,20 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 				.authorizedGrantTypes(GRANT_TYPE_PASSWORD, AUTHORIZATION_CODE, REFRESH_TOKEN, IMPLICIT )
 				.scopes(SCOPE_READ, SCOPE_WRITE, TRUST)
 				.accessTokenValiditySeconds(Integer.parseInt(ACCESS_TOKEN_VALIDITY_SECONDS)).
-				refreshTokenValiditySeconds(Integer.parseInt(FREFRESH_TOKEN_VALIDITY_SECONDS));
+				refreshTokenValiditySeconds(Integer.parseInt(FREFRESH_TOKEN_VALIDITY_SECONDS))
+				.and()
+				
+				.withClient("tonr")
+	 			.resourceIds(RESOURCE_ID)
+	 			.authorizedGrantTypes("authorization_code", "implicit")
+	 			.authorities("ROLE_CLIENT")
+	 			.scopes("read", "write")
+	 			.secret("secret")
+				//.redirectUris("http://localhost:8080/tonr2/sparklr/photos")
+				.redirectUris("http://localhost:8082/resources/photos")
+	 		
+				;
+		
 	}
 
 	@Override
