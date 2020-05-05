@@ -12,7 +12,7 @@ import java.util.*;
 
 import static java.util.Objects.isNull;
 
-@Document
+@Document(collection = "MongoClientDetails")
 public class MongoClientDetails implements ClientDetails {
 
     @Id

@@ -3,6 +3,7 @@ package com.spring.study.config;
 import javax.annotation.Resource;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,11 +15,16 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.provider.token.AuthenticationKeyGenerator;
+import org.springframework.security.oauth2.provider.token.DefaultAuthenticationKeyGenerator;
 import org.springframework.security.oauth2.provider.token.TokenStore;
-import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+
+import com.spring.study.mongo.MongoTokenStore;
+import com.spring.study.mongo.repositories.MongoOAuth2AccessTokenRepository;
+import com.spring.study.mongo.repositories.MongoOAuth2RefreshTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -48,10 +54,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/api-docs/**").permitAll();
     }
+    
+    
+    @Autowired
+	private MongoOAuth2AccessTokenRepository mongoOAuth2AccessTokenRepository;
+
+	@Autowired
+	private MongoOAuth2RefreshTokenRepository mongoOAuth2RefreshTokenRepository;
+
+	@Autowired
+	private AuthenticationKeyGenerator authenticationKeyGenerator;
 
     @Bean
     public TokenStore tokenStore() {
-        return new InMemoryTokenStore();
+    	return new MongoTokenStore(mongoOAuth2AccessTokenRepository, 
+				mongoOAuth2RefreshTokenRepository, authenticationKeyGenerator);
+//        return new InMemoryTokenStore();
     }
 
     @Bean

@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.provider.approval.Approval.ApprovalSt
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@Document
+@Document(collection="MongoApproval")
 public class MongoApproval {
 
     @Id
